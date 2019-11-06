@@ -15,6 +15,58 @@ func initBeacon() (*Beacon, error) {
 	return b, nil
 }
 
+// CreateAltBeacon Create a beacon in the AltBeacon format
+func CreateAltBeacon(uuidBytes []byte, major uint16, minor uint16, measuredPower uint16) (*Beacon, error) {
+
+	frames := []byte{
+		0xBE, 0xAC,
+	}
+
+	// uuid 2-17
+	// uuidBytes, err := hex.DecodeString(strings.Replace(uuid, "-", "", -1))
+	// if err != nil {
+	// 	return nil, err
+	// }
+	frames = append(frames, uuidBytes...)
+
+	// major 18,19
+	majorb := make([]byte, 2)
+	binary.BigEndian.PutUint16(majorb, major)
+	frames = append(frames, majorb...)
+
+	// minor 20,21
+	minorb := make([]byte, 2)
+	binary.BigEndian.PutUint16(minorb, minor)
+	frames = append(frames, minorb...)
+
+	// pwr 22
+	mpwr := make([]byte, 2)
+	binary.BigEndian.PutUint16(mpwr, measuredPower)
+	frames = append(frames, mpwr[1])
+
+	//mfgSpecial 23
+	// frames = append(frames, mfgSpecial)
+
+	b, err := initBeacon()
+	if err != nil {
+		return nil, err
+	}
+
+	b.Type = BeaconTypeIBeacon
+	b.altBeacon = BeaconAlt{
+		UUID:  uuidBytes,
+		Major: major,
+		Minor: minor,
+		RSSI:  measuredPower,
+		// MfgSpecial: mfgSpecial,
+		Type: "proximity",
+	}
+
+	b.props.AddManufacturerData(genericBit, frames)
+
+	return b, nil
+}
+
 // CreateIBeacon Create a beacon in the IBeacon format
 func CreateIBeacon(uuid string, major uint16, minor uint16, measuredPower uint16) (*Beacon, error) {
 
@@ -58,7 +110,7 @@ func CreateIBeacon(uuid string, major uint16, minor uint16, measuredPower uint16
 		Type:          "proximity",
 	}
 
-	b.props.AddManifacturerData(appleBit, frames)
+	b.props.AddManufacturerData(appleBit, frames)
 
 	return b, nil
 }

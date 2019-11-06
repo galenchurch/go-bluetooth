@@ -9,17 +9,20 @@ import (
 )
 
 const appleBit = 0x004C
+const genericBit = 0x4602
 
 type BeaconType string
 
 const (
 	BeaconTypeEddystone = "eddystone"
 	BeaconTypeIBeacon   = "ibeacon"
+	BeaconTypeAltBeacon = "altbeacon"
 )
 
 type Beacon struct {
 	Name      string
 	iBeacon   BeaconIBeacon
+	altBeacon BeaconAlt
 	eddystone BeaconEddystone
 	props     *advertising.LEAdvertisement1Properties
 	Type      BeaconType
@@ -110,6 +113,9 @@ func (b *Beacon) Parse() bool {
 		if b.parserIBeacon(props.ManufacturerData) {
 			return true
 		}
+		if b.parserAltBeacon(props.ManufacturerData) {
+			return true
+		}
 
 	}
 
@@ -121,8 +127,25 @@ func (b *Beacon) Parse() bool {
 		if b.parserIBeacon(props.ManufacturerData) {
 			return true
 		}
+		if b.parserAltBeacon(props.ManufacturerData) {
+			return true
+		}
 	}
 
+	return false
+}
+
+func (b *Beacon) parserAltBeacon(manufacturerData map[uint16]interface{}) bool {
+	if len(manufacturerData) == 0 {
+		return false
+	}
+	if frames, ok := manufacturerData[genericBit]; ok {
+		// log.Debug("Found iBeacon")
+		// log.Debugf("iBeacon data: %d", frames)
+		b.Type = BeaconTypeAltBeacon
+		b.altBeacon = b.ParseAltBeacon(frames.([]byte))
+		return true
+	}
 	return false
 }
 

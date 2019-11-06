@@ -1,6 +1,8 @@
 package beacon
 
 import (
+	"log"
+
 	"github.com/muka/go-bluetooth/api"
 	"github.com/muka/go-bluetooth/bluez/profile/advertising"
 )
@@ -18,6 +20,7 @@ func (b *Beacon) Expose(adapterID string, timeout uint16) (func(), error) {
 	// Not sure if duration can be mapped to interval.
 	// props.Duration = 1
 	props.Timeout = timeout
+	log.Printf("Props=%v\n", props)
 
 	cancel, err := api.ExposeAdvertisement(adapterID, props, uint32(timeout))
 
